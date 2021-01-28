@@ -65,7 +65,8 @@ export default class MeshEditor {
   loadOpenMesh() {
     return new Promise<void>(async resolve => {
       const objFile = exporter.parse(this.mesh);
-      this.triMesh = await ioManager.read(objFile);
+      this.triMesh = await ioManager.read(objFile, new TriMesh());
+      console.log(this.triMesh)
       resolve()
     })
   }
