@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const faceLandmarksDetection = require("@tensorflow-models/face-landmarks-detection");
+const faceLandmarksDetection = require("@tensorflow-models/face-landmarks-detection"); // Check mesh id
 // If you are using the WebGL backend:
 // require("@tensorflow/tfjs-backend-webgl");
 // If you are using the WASM backend:

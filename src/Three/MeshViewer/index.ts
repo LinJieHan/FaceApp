@@ -2,6 +2,7 @@ import * as THREE from "three";
 import CameraController from "./Camera";
 import ImagePlane from "./Carrier/ImagePlane";
 import MeshEditor from "./MeshEditor";
+import * as dat from "dat-gui";
 
 
 export default class MeshViewer {
@@ -12,7 +13,9 @@ export default class MeshViewer {
   facePoint: THREE.Points | undefined;
   delaunayMesh: THREE.Mesh | undefined;
   isAdded: boolean;
+  gui: dat.GUI;
   meshEditor: MeshEditor | undefined;
+
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -21,6 +24,7 @@ export default class MeshViewer {
     const material = new THREE.MeshBasicMaterial();
     this.basePlane = new THREE.Mesh(geometry, material);
     this.scene.add(this.basePlane);
+    this.gui = new dat.GUI();
     this.isAdded = false;
     const self = this;
     const animate = function () {
@@ -57,6 +61,30 @@ export default class MeshViewer {
       this.scene.add(this.meshEditor.mesh)
       this.scene.add(this.meshEditor.controlPoints);
       this.isAdded = true;
+      this.setEyeSizeGUI();
     }
+  }
+
+  setEyeSizeGUI(){
+    const modelScale = {
+      scale: 1
+    }
+    const slider_Left = this.gui.add(modelScale, 'scale', -5, 10);
+    slider_Left.onChange(async value => {
+      console.log(value);
+      if(value > 10) 
+      {
+        value = 10;
+      }
+      else if(value < -10)
+      {
+        value = -10;
+      }
+      else
+      {
+        this.meshEditor.LeftEyeScale = value * 0.02;
+        this.meshEditor.FindLeftEyesVertices();
+      }
+    });
   }
 }
