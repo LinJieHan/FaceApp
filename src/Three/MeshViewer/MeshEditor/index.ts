@@ -3,7 +3,7 @@ import RenderOrder from "Three/MeshViewer/renderOrder";
 import ImagePlane from "Three/MeshViewer/Carrier/ImagePlane"
 import OpenMesh from "OpenMesh"
 import TriMesh from "OpenMesh/Mesh/TriMeshT";
-import { Vector2, Vector3 } from "three";
+import FindLeftEye from "./FindLeftEye";
 
 const openMesh = new OpenMesh();
 const OBJExporter = require('three-obj-exporter');
@@ -12,8 +12,6 @@ let self: MeshEditor;
 const ioManager = openMesh.ioManager;
 const greenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const redMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-// let LeftEyesVertices : number[] = [11,37,134,148,149,157,158,161,162,163,164,165,167,177,250];
-let LeftEyesVertices : number[] = [11,26,27,28,29,30,31,32,33,34,37,60,114,116,117,134,137,148,149,157,158,159,161,162,163,164,165,167,177,194,225,230,236,237,247,250,251];
 
 function pointInTriangle(point: THREE.Vector3, v1: THREE.Vector3, v2: THREE.Vector3, v3: THREE.Vector3) {
   let d1, d2, d3;
@@ -51,8 +49,8 @@ export default class MeshEditor {
   selectMode: boolean = false;
   basePlane: THREE.Mesh;
   currentFace: any;
-  LeftEyeScale: number = 0;
-  LeftEyeOffset: Vector2[];
+
+  LeftEyeEditor: FindLeftEye;
   constructor(imagePlane: ImagePlane, camera: THREE.Camera, controlPointSize: number) {
     this.basePlane = imagePlane.basePlaneMesh;
     this.mesh = imagePlane.delaunayMesh;
@@ -61,9 +59,9 @@ export default class MeshEditor {
     this.controlPoints.renderOrder = RenderOrder.controlPoints;
     this.controlPointSize = controlPointSize;
     this.enable = false;
-	this.LeftEyeScale = 0;
+    this.planePoint = new THREE.Vector3(0,0,0);
     self = this;
-	this.LeftEyeOffset = null;
+    this.LeftEyeEditor = new FindLeftEye(self);
     this.attachPointerEvent();
     this.createControlPoints();
 
@@ -101,89 +99,13 @@ export default class MeshEditor {
       console.log(self.selectMode)
     } else if (e.key === "w" || e.key === "W")
     {
-		this.LeftEyeScale = 0.02;
-      	self.FindLeftEyesVertices();
+		    this.LeftEyeEditor.LeftEyeScale = 0.02;
+      	this.LeftEyeEditor.FindLeftEyesVertices();
     }else if (e.key === "s" || e.key === "S")
     {
-		this.LeftEyeScale = -0.02;
-      	self.FindLeftEyesVertices();
+		    this.LeftEyeEditor.LeftEyeScale = -0.02;
+      	this.LeftEyeEditor.FindLeftEyesVertices();
     }
-  }
-  async FindLeftEyesVertices()
-  {
-	let xtotal: number = 0;
-	let ytotal: number = 0;
-	let ztotal: number = 0;
-	let First: boolean = false;
-	if(this.LeftEyeOffset == null)
-	{
-		First = true;
-		this.LeftEyeOffset = []
-	}
-    for (let v_it = self.triMesh.vertices_begin(); v_it.idx() !== self.triMesh.vertices_end().idx(); v_it.next()) {
-      const vhandle = v_it.handle();
-      let mesh = self.controlPoints.children[vhandle.idx()] as THREE.Mesh;
-      for(let i = 0; i < LeftEyesVertices.length; i++)
-      {
-        if(LeftEyesVertices[i] === vhandle.idx())
-        {
-          //self.currentPointOneRing.push(mesh)
-          mesh.material = greenMat;
-		  //console.log(mesh.position);
-		  xtotal+= mesh.position.x;
-		  ytotal+= mesh.position.y;
-			ztotal+= mesh.position.z;
-        }
-      }
-    }
-	const geometry = new THREE.PlaneBufferGeometry(this.controlPointSize, this.controlPointSize);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-
-    const midpoint = new THREE.Mesh(geometry, material);
-    midpoint.position.set(xtotal / LeftEyesVertices.length, ytotal / LeftEyesVertices.length, ztotal / LeftEyesVertices.length);
-    this.controlPoints.add(midpoint);
-    midpoint.userData.index = 468;
-	for (let v_it = self.triMesh.vertices_begin(); v_it.idx() !== self.triMesh.vertices_end().idx(); v_it.next()) {
-		const vhandle = v_it.handle();
-		let mesh3 = self.controlPoints.children[vhandle.idx()] as THREE.Mesh;
-		for(let i = 0; i < LeftEyesVertices.length; i++)
-		{
-		  if(LeftEyesVertices[i] === vhandle.idx())
-		  {
-			//self.currentPointOneRing.push(mesh3)
-			mesh3.material = greenMat;
-			let MidtoVertex_x :number = mesh3.position.x - midpoint.position.x;
-			let MidtoVertex_y :number = mesh3.position.y - midpoint.position.y;
-			if(First === true)
-			{
-				this.LeftEyeOffset.push(new Vector2(MidtoVertex_x,MidtoVertex_y));
-			}
-			self.currentIndex = vhandle.idx();
-			if (
-				self.mesh.geometry instanceof THREE.BufferGeometry &&
-				self.currentIndex !== null
-			  ) {
-				//update mesh
-				console.log(this.LeftEyeScale);
-				self.mesh.geometry.attributes.position.setXY(
-				  self.currentIndex,
-				  self.planePoint.x +midpoint.position.x+ this.LeftEyeOffset[i].x * (this.LeftEyeScale + 1),
-				  self.planePoint.y +midpoint.position.y+ this.LeftEyeOffset[i].y * (this.LeftEyeScale + 1)
-				);
-				//update control point position
-				self.controlPoints.children[self.currentIndex].position.set(
-				  self.planePoint.x +midpoint.position.x+ this.LeftEyeOffset[i].x * (this.LeftEyeScale + 1),	
-				  self.planePoint.y +midpoint.position.y+ this.LeftEyeOffset[i].y * (this.LeftEyeScale + 1),
-				  0
-				);
-				//console.log(this.LeftEyeOffset[i]);
-				self.mesh.geometry.attributes.position.needsUpdate = true;
-			  }
-		  }
-		}
-		self.currentIndex = null;
-		//this.LeftEyeScale = 0;
-	  }
   }
   async findOneRingVertices() {
 

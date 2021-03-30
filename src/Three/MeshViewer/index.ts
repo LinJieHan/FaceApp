@@ -71,7 +71,7 @@ export default class MeshViewer {
     }
     const slider_Left = this.gui.add(modelScale, 'scale', -5, 10);
     slider_Left.onChange(async value => {
-      console.log(value);
+      console.log(this.meshEditor.LeftEyeEditor.LeftEyeScale);
       if(value > 10) 
       {
         value = 10;
@@ -82,8 +82,8 @@ export default class MeshViewer {
       }
       else
       {
-        this.meshEditor.LeftEyeScale = value * 0.02;
-        this.meshEditor.FindLeftEyesVertices();
+        this.meshEditor.LeftEyeEditor.LeftEyeScale = value * 0.02;
+        this.meshEditor.LeftEyeEditor.FindLeftEyesVertices();
       }
     });
   }
